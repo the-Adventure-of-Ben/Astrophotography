@@ -1,6 +1,7 @@
 # Astrophotography
-**_DISCLAMER: currently a lot of the code is writen by AI. This is due to my lack of understanding with the programing languages and libraries. Of course I use my brain and try to figure things out first and stitch thing together._**
 ### !Currenlty in development!
+
+**_DISCLAMER: currently a lot of the code is writen by AI. This is due to my lack of understanding with the programing languages and libraries. Of course I use my brain and try to figure things out first and stitch thing together._**
 
 **Help would be appreciated, please message in the dicussion to become a collaborator**
 
@@ -11,7 +12,7 @@ This is a project that should allow for full control of a telescope that doesn't
 
 <details>
   
-<summary>1. Current system parts:</summary>
+<summary>Current system parts:</summary>
 
 **Current telescope control system parts:**
 - Two stepper motors (one for azimuth, other for altitude).
