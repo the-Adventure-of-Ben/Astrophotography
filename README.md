@@ -1,6 +1,8 @@
 # Astrophotography
+_DISCLAMER: currently a lot of the code is writen by AI. This is due to my lack of understanding with the programing languages and libraries. Of course I use my brain and try to figure things out first._
 ### ----Currenlty in development----
 Very specilised to my need currently so that I can test the software with the hardware, though it will be generalised so that others can use it more easily.
+
   
 This is a project that should allow for full control of a telescope that doesn't have an automatic tracker as they are expensive. the system is split into three main parts _telescope control_, _camera system_ and _communication system_.
 
