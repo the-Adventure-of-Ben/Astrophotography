@@ -3,7 +3,7 @@
 
 **_DISCLAMER: currently a lot of the code is writen by AI. This is due to my lack of understanding with the programing languages and libraries. Of course I use my brain and try to figure things out first and stitch thing together._**
 
-**Help would be appreciated, please message in the dicussion to become a collaborator**
+**Help would be appreciated, please check the [guidelines](CONTRIBUTING) on how to contribute**
 
 Very specilised to my need currently so that I can test the software with the hardware, though it will be generalised so that others can use it more easily.
 
