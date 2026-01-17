@@ -1,0 +1,29 @@
+import struct
+from meshtastic.serial_interface import SerialInterface # type: ignore
+import time
+
+iface = SerialInterface()
+time.sleep(2)
+
+PACKET_TARGET = 0x01
+MODE_LUNAR = 0x02
+
+az = 123.45
+alt = 67.89
+
+az_i = int(az * 100)
+alt_i = int(alt * 100)
+
+payload = struct.pack(
+    "<BBHh",
+    PACKET_TARGET,
+    MODE_LUNAR,
+    az_i,
+    alt_i
+)
+
+iface.sendData(
+    payload,
+    destinationId="!abcd1234",
+    portNum=256    # custom app port
+)
