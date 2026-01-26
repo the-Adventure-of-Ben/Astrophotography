@@ -23,7 +23,7 @@ def init_sdk():
     except Exception as e:
         print(f"⚠️ Failed to initialize ASI SDK: {e}")
         raise
-    print("✅ ASI SDK initialized.")
+    # print("✅ ASI SDK initialized.")
 
 def Gui_Available():
     display = "DISPLAY" in os.environ
@@ -48,7 +48,7 @@ def connect_camera(retries=5, delay=2):
         if cams:
             try:
                 cam = zwoasi.Camera(cams[0])
-                print(f"✅ Connected to {cams[0]}")
+               # print(f"✅ Connected to {cams[0]}")
                 return cam
             except zwoasi.ZWO_IOError as e:
                 print(f"⚠️ Camera not ready ({e}), retrying ({attempt}/{retries})…")
@@ -86,11 +86,11 @@ def find_rp2040(vid, pid, serial=None):
     for attempt in range(1, 6):   
         for p in list_ports.comports():
             if (p.vid == vid and p.pid == pid ) and (serial is None or p.serial_number == serial):
-                print(f"✅ Found RP2040 device at {p.device}")
+               # print(f"✅ Found RP2040 device at {p.device}")
                 return p.device
         print("⚠️ No RP2040 device found.")
         time.sleep(2)
         attempt += 1
         if attempt > 5:
             print("❌ Could not find RP2040 device after multiple attempts.")
-            return None   
+            return None

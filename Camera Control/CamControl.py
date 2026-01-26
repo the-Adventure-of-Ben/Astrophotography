@@ -410,58 +410,16 @@ try:
 			print("Auto focus mode")
 			frame, metric, brightness = auto_adjust_focus(cam, metric)
 		post(frame)
-		key = cv2.waitKey(1)
-		
-			
-		# GUI quit key
-		if key == ord('q'):
-			print("GUI requested quit")
-			running = False
-			break
-		# Shell stdin non-blocking quit (type 'q' + Enter in the shell)
 		try:
-			# add diagnostics so we can see whether stdin is available and usable
-			if sys.stdin:
-				try:
-					iat = sys.stdin.isatty()
-				except Exception as e_iat:
-					iat = f"error: {e_iat}"
-				if (i == 0):
-					print(f"stdin present; isatty={iat}")
-					i = 1
-				# try select regardless of isatty (but capture any select errors)
-				try:
-					r,_,_ = select.select([sys.stdin], [], [], 0)
-				except Exception as e_sel:
-					print(f"select on stdin failed: {e_sel}")
-					r = []
-				if r:
-					try:
-						fd = sys.stdin.fileno()
-						data = os.read(fd, 4096)
-						if isinstance(data, bytes):
-							cmd = data.decode('utf-8', errors='ignore').strip()
-						else:
-							cmd = str(data).strip()
-					except Exception as e_read:
-						print(f"Error reading stdin: {e_read}")
-						try:
-							cmd = sys.stdin.readline().strip()
-						except Exception as e_rl:
-							print(f"Error readline fallback: {e_rl}")
-							cmd = ''
-					print(f"stdin cmd: {cmd!r}")
-					cmd_l = cmd.lower()
-					if cmd_l in ('q', 'quit', 'exit'):
-						print("Quit command received on stdin, exiting...")
-						running = False
-						break
-					elif cmd_l in ('s', 'c', 'capture'):
-						save_capture(frame, BASE_DIR, save_dir)
-
+			cmd = sys.stdin.readline().strip()
+			if not cmd:
+				continue
+			parts = cmd.split()
+			cmd_l = parts[0].lower()
+			if cmd_l in ['capture', 'c', 's']:
+				save_capture(frame, BASE_DIR, save_dir)
 		except Exception as e:
-			print(f"stdin handler error: {e}")
-				
+			print(f"Error couldn't read stdin: {e}")
 		time.sleep(0.05)
 
 except KeyboardInterrupt:
