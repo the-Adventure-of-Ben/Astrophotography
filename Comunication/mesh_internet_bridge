@@ -1,9 +1,41 @@
 import struct
 from meshtastic.serial_interface import SerialInterface # type: ignore
 import time
-
+import sys
 iface = SerialInterface()
-time.sleep(2)
+running = True
+def handle_signal(signum):
+	global running
+	print(f"Received signal {signum}, shutting down...")
+	running = False
+     
+def sendNew(target):
+    # Prepare payload
+    something = 1
+    return something
+
+try:
+    while running:
+        try:
+            cmd = sys.stdin.readline().strip()
+            if not cmd:
+                continue
+            
+            parts = cmd.split(maxsplit=1)
+            cmd_l = parts[0].lower()
+            
+            if cmd_l == 'target' and len(parts) > 1:
+                target = parts[1].strip("'\"")
+                message = sendNew(target)
+                # Process target...        
+        except Exception as e:
+            print(f"Error reading stdin: {e}")
+        iface.processIncomingData()
+        time.sleep(0.1)
+
+finally:
+    iface.close()
+
 
 PACKET_TARGET = 0x01
 MODE_LUNAR = 0x02
@@ -27,3 +59,4 @@ iface.sendData(
     destinationId="!abcd1234",
     portNum=256    # custom app port
 )
+
