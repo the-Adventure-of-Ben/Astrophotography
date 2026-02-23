@@ -1,54 +1,135 @@
-import machine
+import micropython
+import machine 
 import time
-from machine import UART #type: ignore
-from machine import Pin #type: ignore
-from machine import PWM #type: ignore
+import math
+from machine import UART 
+from machine import Pin 
+from machine import PWM
 
-com = UART(0, 9600) #type: ignore
+state = "HOMING"
+com = UART(0, 9600)
 servo = machine.PWM(machine.Pin(12), freq=50)
-servo.duty_u16(77)
-best = 0
-SMOOTHING = 0.8
+servo.duty_u16(0)
 
+switch_pin_max = Pin(14, Pin.IN, Pin.PULL_UP)
+switch_pin_min = Pin(13, Pin.IN, Pin.PULL_UP)
 
+metric = 0
+prev_metric = 0
+power = 0
+poll = None
+timestamps = [0,0]
 
-#FUNCTIONS
-def move_amount(direction, dif, best):
+def limit_callback(pin):
+    global state
+    if state != "AT_MIN" and state != "AT_MAX":
+        pin.irq(handler=None)
+        micropython.schedule(limit_handler, pin)
+    else:
+        pass
+
+def limit_handler(pin):
+    global state
+    if pin == switch_pin_min:
+        state = "AT_MIN"
+        
+    elif pin == switch_pin_max:
+        state = "AT_MAX"
+
+switch_pin_min.irq(trigger=Pin.IRQ_FALLING, handler=limit_callback)
+switch_pin_max.irq(trigger=Pin.IRQ_FALLING, handler=limit_callback)
+
+def servo_stop():
     global servo
-    dif = int(dif)
-    differance = dif - best
-    if abs(differance) < 10 and best > 250:
-        return
-    SMOOTHING = max(0.1, min(0.99, (abs(differance) + 1) ** (-abs(differance)/1000)))
-    if best < 200:
-        #coarse
-        if direction == 'I':
-            servo.duty_u16(115)
-        elif direction == 'O':
-            servo.duty_u16(40)
+    servo.duty_u16(0)
 
-    elif best > 100:
-        #fine
-        if direction == 'I':
-            servo.duty_u16(max(77 + int(differance * (1 - SMOOTHING)), 115))
-        elif direction == 'O':
-            servo.duty_u16(min(77 - int(differance * (1 - SMOOTHING)), 40))
-    time.sleep(0.5)
-    servo.duty_u16(77)
-    best = dif if dif > best else best
-    return best
+def servo_move_in():
+    global power, servo
+    amount = math.pow(2,(189*power)/2000)+7*power
+    amount = math.floor(amount)
+    servo.duty_u16(amount)
+    
+def servo_move_out():
+    global power, servo
+    amount = (2*math.pow((889*power)/10000)+9*power+3350)/2
+    amount = math.floor(amount)
+    servo.duty_u16(amount)
+    
+def min_bounce():
+    global servo
+    servo.duty_u16(0)
+    time.sleep_ms(50)
+    servo.duty_u16(2600)
+    time.sleep_ms(50)
+    servo.duty_u16(0)
+    switch_pin_min.irq(trigger=Pin.IRQ_FALLING, handler=limit_callback)
+    
+def max_bounce():
+    global servo
+    servo.duty_u16(0)
+    time.sleep_ms(50)
+    servo.duty_u16(400)
+    time.sleep_ms(50)
+    servo.duty_u16(0)
+    switch_pin_max.irq(trigger=Pin.IRQ_FALLING, handler=limit_callback)
 
+def servo_home():
+    global servo
+    servo.duty_u16(1000)
+    
+def servo_power(metric, dt, prev_metric):
+    global desired_direction, power
+    diff = metric - prev_metric
+    power = diff/dt
+    if diff > 0:
+        desired_direction = "OUT"
+    elif diff < 0:
+        desired_direction = "IN"
 
-
-
-# main loop
 while True:
-    poll = com.any()
+    try:
+        poll = com.any()
+    except Exception:
+        pass
     if poll:
+        timestamps[0] = timestamps[1]
+        timestamps[1] = time.ticks_us()
+        dt = time.ticks_diff(timestamps[1],timestamps[0])
         comand = com.readline()
-        comand = comand.decode('utf-8')
-        direction = comand[-1:]
-        dif = comand[:-1]
-        best = move_amount(direction, dif, best)
-    
-    
+        prev_metric = metric
+        metric = int(comand.decode('utf-8'))
+        servo_power(metric, dt, prev_metric)
+
+    if state == "IDLE":
+        servo_stop()
+
+    elif state == "HOMING":
+        servo_home()
+
+    elif state == "MOVING_IN":
+        servo_move_in()
+        time.sleep_ms(50)
+        state = "IDLE"
+
+    elif state == "MOVING_OUT":
+        servo_move_out()
+        time.sleep_ms(50)
+        state = "IDLE"
+
+    elif state == "AT_MIN":
+        servo_stop()
+        min_bounce()
+        state = "IDLE"
+
+    elif state == "AT_MAX":
+        servo_stop()
+        max_bounce()
+        state = "IDLE"
+        
+    else:
+        if desired_direction == "IN":
+            servo_move_in()
+        elif desired_direction == "OUT":
+            servo_move_out()
+        else:
+            servo_stop()
